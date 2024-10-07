@@ -1,9 +1,10 @@
 
 
+#include "../include/libCacheSim/cacheObj.h"
+
 #include <assert.h>
 #include <gmodule.h>
 
-#include "../include/libCacheSim/cacheObj.h"
 #include "../include/libCacheSim/macro.h"
 #include "../include/libCacheSim/request.h"
 
@@ -12,8 +13,7 @@
  * @param req_dest
  * @param cache_obj
  */
-void copy_cache_obj_to_request(request_t *req_dest,
-                               const cache_obj_t *cache_obj) {
+void copy_cache_obj_to_request(request_t *req_dest, const cache_obj_t *cache_obj) {
   req_dest->obj_id = cache_obj->obj_id;
   req_dest->obj_size = cache_obj->obj_size;
   req_dest->next_access_vtime = cache_obj->misc.next_access_vtime;
@@ -54,8 +54,7 @@ cache_obj_t *create_cache_obj_from_request(const request_t *req) {
  * @param tail
  * @param cache_obj
  */
-void remove_obj_from_list(cache_obj_t **head, cache_obj_t **tail,
-                          cache_obj_t *cache_obj) {
+void remove_obj_from_list(cache_obj_t **head, cache_obj_t **tail, cache_obj_t *cache_obj) {
   if (head != NULL && cache_obj == *head) {
     *head = cache_obj->queue.next;
     if (cache_obj->queue.next != NULL) cache_obj->queue.next->queue.prev = NULL;
@@ -65,11 +64,9 @@ void remove_obj_from_list(cache_obj_t **head, cache_obj_t **tail,
     if (cache_obj->queue.prev != NULL) cache_obj->queue.prev->queue.next = NULL;
   }
 
-  if (cache_obj->queue.prev != NULL)
-    cache_obj->queue.prev->queue.next = cache_obj->queue.next;
+  if (cache_obj->queue.prev != NULL) cache_obj->queue.prev->queue.next = cache_obj->queue.next;
 
-  if (cache_obj->queue.next != NULL)
-    cache_obj->queue.next->queue.prev = cache_obj->queue.prev;
+  if (cache_obj->queue.next != NULL) cache_obj->queue.next->queue.prev = cache_obj->queue.prev;
 
   cache_obj->queue.prev = NULL;
   cache_obj->queue.next = NULL;
@@ -81,8 +78,7 @@ void remove_obj_from_list(cache_obj_t **head, cache_obj_t **tail,
  * @param tail
  * @param cache_obj
  */
-void move_obj_to_tail(cache_obj_t **head, cache_obj_t **tail,
-                      cache_obj_t *cache_obj) {
+void move_obj_to_tail(cache_obj_t **head, cache_obj_t **tail, cache_obj_t *cache_obj) {
   if (*head == *tail) {
     // the list only has one element
     assert(cache_obj == *head);
@@ -127,8 +123,7 @@ void move_obj_to_tail(cache_obj_t **head, cache_obj_t **tail,
  * @param tail
  * @param cache_obj
  */
-void move_obj_to_head(cache_obj_t **head, cache_obj_t **tail,
-                      cache_obj_t *cache_obj) {
+void move_obj_to_head(cache_obj_t **head, cache_obj_t **tail, cache_obj_t *cache_obj) {
   DEBUG_ASSERT(head != NULL);
 
   if (tail != NULL && *head == *tail) {
@@ -179,8 +174,7 @@ void move_obj_to_head(cache_obj_t **head, cache_obj_t **tail,
  * @param tail
  * @param cache_obj
  */
-void prepend_obj_to_head(cache_obj_t **head, cache_obj_t **tail,
-                         cache_obj_t *cache_obj) {
+void prepend_obj_to_head(cache_obj_t **head, cache_obj_t **tail, cache_obj_t *cache_obj) {
   assert(head != NULL);
 
   cache_obj->queue.prev = NULL;
@@ -207,9 +201,7 @@ void prepend_obj_to_head(cache_obj_t **head, cache_obj_t **tail,
  * @param tail
  * @param cache_obj
  */
-void append_obj_to_tail(cache_obj_t **head, cache_obj_t **tail,
-                        cache_obj_t *cache_obj) {
-
+void append_obj_to_tail(cache_obj_t **head, cache_obj_t **tail, cache_obj_t *cache_obj) {
   cache_obj->queue.next = NULL;
   cache_obj->queue.prev = *tail;
 
@@ -223,7 +215,6 @@ void append_obj_to_tail(cache_obj_t **head, cache_obj_t **tail,
     // the list has at least one element
     (*tail)->queue.next = cache_obj;
   }
-
 
   *tail = cache_obj;
 }

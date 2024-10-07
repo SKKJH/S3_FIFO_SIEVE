@@ -22,13 +22,13 @@ extern "C" {
 // ****                                                               ****
 // ***********************************************************************
 
-static void FIFO_parse_params(cache_t *cache,
-                              const char *cache_specific_params);
+static void FIFO_parse_params(cache_t *cache, const char *cache_specific_params);
 static void FIFO_free(cache_t *cache);
 static bool FIFO_get(cache_t *cache, const request_t *req);
-static cache_obj_t *FIFO_find(cache_t *cache, const request_t *req,
-                              const bool update_cache);
+static cache_obj_t *FIFO_find(cache_t *cache, const request_t *req, const bool update_cache);
 static cache_obj_t *FIFO_insert(cache_t *cache, const request_t *req);
+static cache_obj_t *FIFO_insert_66(cache_t *cache, const request_t *req);
+static cache_obj_t *FIFO_insert_33(cache_t *cache, const request_t *req);
 static cache_obj_t *FIFO_to_evict(cache_t *cache, const request_t *req);
 static void FIFO_evict(cache_t *cache, const request_t *req);
 static bool FIFO_remove(cache_t *cache, const obj_id_t obj_id);
@@ -46,14 +46,15 @@ static bool FIFO_remove(cache_t *cache, const obj_id_t obj_id);
  * @param ccache_params some common cache parameters
  * @param cache_specific_params ARC specific parameters, should be NULL
  */
-cache_t *FIFO_init(const common_cache_params_t ccache_params,
-                   const char *cache_specific_params) {
+cache_t *FIFO_init(const common_cache_params_t ccache_params, const char *cache_specific_params) {
   cache_t *cache = cache_struct_init("FIFO", ccache_params, cache_specific_params);
   cache->cache_init = FIFO_init;
   cache->cache_free = FIFO_free;
   cache->get = FIFO_get;
   cache->find = FIFO_find;
   cache->insert = FIFO_insert;
+  cache->insert_33 = FIFO_insert_33;
+  cache->insert_66 = FIFO_insert_66;
   cache->evict = FIFO_evict;
   cache->remove = FIFO_remove;
   cache->to_evict = FIFO_to_evict;
@@ -67,6 +68,10 @@ cache_t *FIFO_init(const common_cache_params_t ccache_params,
   params->q_head = NULL;
   params->q_tail = NULL;
 
+  cache->ocp_flag_size = 0;
+  cache->t_00 = NULL;
+  cache->t_33 = NULL;
+  cache->t_66 = NULL;
   return cache;
 }
 
@@ -99,9 +104,7 @@ static void FIFO_free(cache_t *cache) {
  * @param req
  * @return true if cache hit, false if cache miss
  */
-static bool FIFO_get(cache_t *cache, const request_t *req) {
-  return cache_get_base(cache, req);
-}
+static bool FIFO_get(cache_t *cache, const request_t *req) { return cache_get_base(cache, req); }
 
 // ***********************************************************************
 // ****                                                               ****
@@ -119,8 +122,7 @@ static bool FIFO_get(cache_t *cache, const request_t *req) {
  *  and if the object is expired, it is removed from the cache
  * @return the object or NULL if not found
  */
-static cache_obj_t *FIFO_find(cache_t *cache, const request_t *req,
-                               const bool update_cache) {
+static cache_obj_t *FIFO_find(cache_t *cache, const request_t *req, const bool update_cache) {
   return cache_find_base(cache, req, update_cache);
 }
 
@@ -135,10 +137,41 @@ static cache_obj_t *FIFO_find(cache_t *cache, const request_t *req,
  * @return the inserted object
  */
 static cache_obj_t *FIFO_insert(cache_t *cache, const request_t *req) {
+  // printf("imhere99\n");
   FIFO_params_t *params = (FIFO_params_t *)cache->eviction_params;
+  // printf("imhere999\n");
   cache_obj_t *obj = cache_insert_base(cache, req);
   prepend_obj_to_head(&params->q_head, &params->q_tail, obj);
 
+  return obj;
+}
+
+static cache_obj_t *FIFO_insert_33(cache_t *cache, const request_t *req) {
+  FIFO_params_t *params = (FIFO_params_t *)cache->eviction_params;
+  cache_obj_t *obj = cache_insert_base_num(cache, req);
+  // prepend_obj_to_head(&params->q_head, &params->q_tail, obj);
+  cache->t_33->queue.prev->queue.next = obj;
+  obj->queue.prev = cache->t_33->queue.prev;
+
+  cache->t_33->queue.prev = obj;
+  obj->queue.next = cache->t_33;
+
+  cache->t_33 = obj;
+  cache->t_66 = cache->t_66->queue.prev;
+  return obj;
+}
+
+static cache_obj_t *FIFO_insert_66(cache_t *cache, const request_t *req) {
+  FIFO_params_t *params = (FIFO_params_t *)cache->eviction_params;
+  cache_obj_t *obj = cache_insert_base_num(cache, req);
+  // prepend_obj_to_head(&params->q_head, &params->q_tail, obj);
+  cache->t_66->queue.prev->queue.next = obj;
+  obj->queue.prev = cache->t_66->queue.prev;
+
+  cache->t_66->queue.prev = obj;
+  obj->queue.next = cache->t_66;
+
+  cache->t_66 = obj;
   return obj;
 }
 

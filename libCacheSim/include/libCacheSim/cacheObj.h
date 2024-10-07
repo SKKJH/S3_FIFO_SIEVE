@@ -37,10 +37,10 @@ typedef struct {
 typedef struct {
   void *lfu_next;
   void *lfu_prev;
-  int64_t eviction_vtime:40;
-  int64_t freq:23;
-  int64_t is_ghost:1;
-  int8_t evict_expert; // 1: LRU, 2: LFU
+  int64_t eviction_vtime : 40;
+  int64_t freq : 23;
+  int64_t is_ghost : 1;
+  int8_t evict_expert;  // 1: LRU, 2: LFU
 } __attribute__((packed)) LeCaR_obj_metadata_t;
 
 typedef struct {
@@ -58,8 +58,8 @@ typedef struct {
 } CR_LFU_obj_metadata_t;
 
 typedef struct {
-  int64_t vtime_enter_cache:40;
-  int64_t freq:24;
+  int64_t vtime_enter_cache : 40;
+  int64_t freq : 24;
   void *pq_node;
 } Hyperbolic_obj_metadata_t;
 
@@ -118,8 +118,9 @@ typedef struct {
 } QDLP_obj_metadata_t;
 
 typedef struct {
-  int64_t insertion_time;   // measured in number of objects inserted
+  int64_t insertion_time;  // measured in number of objects inserted
   int64_t freq;
+  int64_t hit;
   int32_t main_insert_freq;
 } S3FIFO_obj_metadata_t;
 
@@ -146,8 +147,7 @@ typedef struct cache_obj {
   uint32_t exp_time;
 #endif
 /* age is defined as the time since the object entered the cache */
-#if defined(TRACK_EVICTION_V_AGE) || \
-    defined(TRACK_DEMOTION) || defined(TRACK_CREATE_TIME)
+#if defined(TRACK_EVICTION_V_AGE) || defined(TRACK_DEMOTION) || defined(TRACK_CREATE_TIME)
   int64_t create_time;
 #endif
   // used by belady related algorithms
@@ -186,16 +186,14 @@ struct request;
  * @param req_dest
  * @param cache_obj
  */
-void copy_cache_obj_to_request(struct request *req_dest,
-                               const cache_obj_t *cache_obj);
+void copy_cache_obj_to_request(struct request *req_dest, const cache_obj_t *cache_obj);
 
 /**
  * copy the data from request into cache_obj
  * @param cache_obj
  * @param req
  */
-void copy_request_to_cache_obj(cache_obj_t *cache_obj,
-                               const struct request *req);
+void copy_request_to_cache_obj(cache_obj_t *cache_obj, const struct request *req);
 
 /**
  * create a cache_obj from request
@@ -214,8 +212,7 @@ cache_obj_t *create_cache_obj_from_request(const struct request *req);
  * @param cache_obj
  * @return
  */
-static inline cache_obj_t *prev_obj_in_slist(cache_obj_t *head,
-                                             cache_obj_t *cache_obj) {
+static inline cache_obj_t *prev_obj_in_slist(cache_obj_t *head, cache_obj_t *cache_obj) {
   assert(head != cache_obj);
   while (head != NULL && head->queue.next != cache_obj) head = head->queue.next;
   return head;
@@ -227,8 +224,7 @@ static inline cache_obj_t *prev_obj_in_slist(cache_obj_t *head,
  * @param tail
  * @param cache_obj
  */
-void remove_obj_from_list(cache_obj_t **head, cache_obj_t **tail,
-                          cache_obj_t *cache_obj);
+void remove_obj_from_list(cache_obj_t **head, cache_obj_t **tail, cache_obj_t *cache_obj);
 
 /**
  * move an object to the tail of the LRU queue (a doubly linked list)
@@ -236,8 +232,7 @@ void remove_obj_from_list(cache_obj_t **head, cache_obj_t **tail,
  * @param tail
  * @param cache_obj
  */
-void move_obj_to_tail(cache_obj_t **head, cache_obj_t **tail,
-                      cache_obj_t *cache_obj);
+void move_obj_to_tail(cache_obj_t **head, cache_obj_t **tail, cache_obj_t *cache_obj);
 
 /**
  * move an object to the head of the LRU queue (a doubly linked list)
@@ -245,8 +240,7 @@ void move_obj_to_tail(cache_obj_t **head, cache_obj_t **tail,
  * @param tail
  * @param cache_obj
  */
-void move_obj_to_head(cache_obj_t **head, cache_obj_t **tail,
-                      cache_obj_t *cache_obj);
+void move_obj_to_head(cache_obj_t **head, cache_obj_t **tail, cache_obj_t *cache_obj);
 
 /**
  * prepend the object to the head of the doubly linked list
@@ -255,8 +249,7 @@ void move_obj_to_head(cache_obj_t **head, cache_obj_t **tail,
  * @param tail
  * @param cache_obj
  */
-void prepend_obj_to_head(cache_obj_t **head, cache_obj_t **tail,
-                         cache_obj_t *cache_obj);
+void prepend_obj_to_head(cache_obj_t **head, cache_obj_t **tail, cache_obj_t *cache_obj);
 
 /**
  * append the object to the tail of the doubly linked list
@@ -265,16 +258,13 @@ void prepend_obj_to_head(cache_obj_t **head, cache_obj_t **tail,
  * @param tail
  * @param cache_obj
  */
-void append_obj_to_tail(cache_obj_t **head, cache_obj_t **tail,
-                        cache_obj_t *cache_obj);
+void append_obj_to_tail(cache_obj_t **head, cache_obj_t **tail, cache_obj_t *cache_obj);
 /**
  * free cache_obj, this is only used when the cache_obj is explicitly
  * malloced
  * @param cache_obj
  */
-static inline void free_cache_obj(cache_obj_t *cache_obj) {
-  my_free(sizeof(cache_obj_t), cache_obj);
-}
+static inline void free_cache_obj(cache_obj_t *cache_obj) { my_free(sizeof(cache_obj_t), cache_obj); }
 
 #ifdef __cplusplus
 }
